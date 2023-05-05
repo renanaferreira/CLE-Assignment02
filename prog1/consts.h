@@ -1,7 +1,6 @@
 #ifndef CONSTS_H
 #define CONSTS_H
 
-
 /** \brief define the total number of vowels */
 #define TOTAL_VOWELS 6
 
