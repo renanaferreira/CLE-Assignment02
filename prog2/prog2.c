@@ -9,6 +9,40 @@ static void printUsage(char *cmdName);
 static const unsigned int WORK_TO_DO = 0;
 static const unsigned int EXECUTE_ERROR = 1;
 
+/**
+ *  \brief Process execution.
+ *
+ *  Design and flow of the dispatcher:
+ *
+ *  1 - Process the arguments from the command line.
+ *
+ *  2 - Initialize the shared region with the necessary structures.
+ *
+ *  3 - Create tasks.
+ *
+ *  4 - Send tasks to worker process and wait to receive results.
+ *
+ *  5 - Sign workers the execution finished.
+ *
+ *  6 - Print final results.
+ *
+ *  Design and flow of the worker:
+ *
+ *  1 - Wait for work status from dispatcher.
+ *
+ *  2 - If there is work to do, wait to receive task.
+ *
+ *  3 - Process task.
+ *
+ *  4 - Send results.
+ *
+ *  5 - Do 2-4, until there is no more work to do.
+ *
+ *  \param argc number of arguments in the command line
+ *  \param argv list of arguments in the command line
+ *
+ *  \return status of operation
+ */
 int main(int argc, char *argv[]) {
     unsigned int *workStatus = malloc(sizeof(unsigned int));
     int *listLength = malloc(sizeof(int));

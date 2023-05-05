@@ -2,17 +2,8 @@
  *  \file sorting.c (definition file)
  *  \brief Bitonic Sort Algorithm Implementation.
  *
- * This module implements the Bitonic Sort algorithm, which is a parallel sorting algorithm that
- * sorts a sequence of numbers in ascending or descending order. The algorithm is based on a
- * divide-and-conquer strategy that divides the sequence into smaller sequences, sorts them
- * recursively, and then merges them back together in a bitonic sequence, which is a sequence that
- * first increases and then decreases in magnitude.
- *
- * The module provides several functions for working with lists of integers, including functions
- * for creating, copying, updating, and printing lists, as well as functions for performing the
- * bitonic sort algorithm on a list and for validating the result.
- *
- * Author: Ronaldo Vieira <ronaldovieira@poli.ufrj.br>
+ * Author:  Renan Ferreira
+ *          João Reis
  */
 #include "sorting.h"
 
@@ -21,6 +12,7 @@
  * \brief Creates a list of integers from a binary file.
  *
  * \param path The path to the binary file containing the list of integers.
+ * 
  * \return The created list of integers.
  */
 List create_list(char* path)
@@ -35,6 +27,7 @@ List create_list(char* path)
  * \brief Creates a copy of a list of integers.
  *
  * \param list The list to copy.
+ * 
  * \return The copied list.
  */
 List copy_list(List list)
@@ -56,6 +49,7 @@ List copy_list(List list)
  * \param list The list to copy the sublist from.
  * \param length The length of the sublist to copy.
  * \param start The starting index of the sublist to copy.
+ * 
  * \return The copied sublist.
  */
 List copy_sublist(List list, int length, int start)
@@ -103,6 +97,7 @@ void sort(List *list)
  * \brief Validates if a sequence of integers is sorted in ascending order.
  *
  * \param list The list of integers to validate.
+ * 
  * \return Whether the sequence is sorted in ascending order or not.
  */
 bool validate_sequence(List list)
@@ -138,10 +133,21 @@ void print_list(List list)
     printf("]\n");
 }
 
+/**
+ * \brief Prints a list of integers to the standard output.
+ *
+ * \param list Pointer to a List struct containing the integers to print.
+ */
 void bitonic_sort(List *list) {
     bitonic_sort_sequence(list->length, list->sequence);
 }
 
+/**
+ * \brief Sorts a sequence of integers using the bitonic sort algorithm.
+ *
+ * \param length Length of the sequence to sort.
+ * \param sequence Pointer to the start of the sequence.
+ */
 void bitonic_sort_sequence(unsigned int length, int *sequence) {
     for (int base = 2; base <= length; base *= 2)
     {
@@ -152,6 +158,13 @@ void bitonic_sort_sequence(unsigned int length, int *sequence) {
     }
 }
 
+/**
+ * \brief Generates a list of random integers.
+ *
+ * \param size Size of the list to generate.
+ * 
+ * \return A List struct containing the generated sequence.
+ */
 List generate_random_list(int size) {
     List list;
     list.length = size;
@@ -168,6 +181,7 @@ List generate_random_list(int size) {
  * \brief Gets the number of orders in a bitonic sequence of a given length.
  *
  * \param length The length of the bitonic sequence.
+ * 
  * \return The number of orders in the bitonic sequence.
  */
 int get_number_bases(int length)
@@ -184,6 +198,7 @@ int get_number_bases(int length)
  *
  * \param length The length of the bitonic sequence.
  * \param base The base to obtain the number of sequences.
+ * 
  * \return The number of bitonic sequences of the given length in the given base in the bitonic sequence.
  */
 int get_num_seq_by_base(int length, int base)
@@ -196,6 +211,7 @@ int get_num_seq_by_base(int length, int base)
  *
  * \param length The length of the bitonic sequence.
  * \param order The given order of the bitonic sequece.
+ * 
  * \return The length of the subsequences of the given in the bitonic sequence.
  */
 int get_seq_len_by_base(int length, int order)
@@ -203,6 +219,13 @@ int get_seq_len_by_base(int length, int order)
     return length / (get_num_seq_by_base(length, order));
 }
 
+/**
+ * \brief Gets the size of a binary file containing a list of integers.
+ *
+ * \param path Path to the binary file to read.
+ * 
+ * \return The size of the list of integers stored in the file.
+ */
 int get_list_size(char *path)
 {
     int size;
@@ -220,12 +243,26 @@ int get_list_size(char *path)
     return size;
 }
 
+/**
+ * \brief Calculates the initial base value for bitonic sort.
+ *
+ * \param length Length of the sequence to be sorted.
+ * \param nWorkers Number of workers to use.
+ *
+ * \return The initial base value for bitonic sort.
+ */
 int get_initial_base(unsigned int length, unsigned int nWorkers)
 {
     int new_length = (int)(length) / (int)(nWorkers);
     return get_number_bases(new_length);
 }
 
+/**
+ * \brief Sorts a sequence of integers using bitonic sort.
+ *
+ * \param length Length of the sequence.
+ * \param sequence Pointer to the sequence of integers.
+ */
 void sort_sequence(unsigned int length, int *sequence) {
     for(unsigned int m = 0; m < length/2; m++)
     {
@@ -241,6 +278,14 @@ void sort_sequence(unsigned int length, int *sequence) {
     }
 }
 
+/**
+ * \brief Creates a copy of a list of integers.
+ *
+ * \param length Length of the input list.
+ * \param sequence Pointer to the input list of integers.
+ * 
+ * \return A new list that contains a copy of the input list.
+ */
 List copy_list_sequence(int length, int *sequence) {
     List new_list;
     new_list.length = length;
@@ -251,6 +296,13 @@ List copy_list_sequence(int length, int *sequence) {
     return new_list;
 }
 
+
+/**
+* \brief Reads a list of integers from a binary file and returns it as an integer array.
+*
+* \param filepath The path of the binary file to read.
+* \return An integer array containing the sequence of integers in the binary file.
+*/
 int *create_list_sequence(char *filepath) {
     int length;
     int *sequence;

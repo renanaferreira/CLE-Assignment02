@@ -1,3 +1,10 @@
+/**
+ *  \file textProcessing.c (definition file)
+ *  \brief Text Processing Algorithm Implementation.
+ *
+ * Author:  Renan Ferreira
+ *          João Reis
+ */
 #include "textProcessing.h"
 
 typedef struct UTF8Character {

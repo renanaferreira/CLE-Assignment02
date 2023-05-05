@@ -59,14 +59,14 @@ static void printUsage(char *cmdName);
  *
  *  2 - If there is work to do, wait to receive task.
  *
- *  3 - process task.
+ *  3 - Process task.
  *
  *  4 - Send results.
  *
  *  5 - Do 2-4, until there is no more work to do.
  *
- *  \param argc number of words of the command line
- *  \param argv list of words of the command line
+ *  \param argc number of arguments in the command line
+ *  \param argv list of arguments in the command line
  *
  *  \return status of operation
  */
