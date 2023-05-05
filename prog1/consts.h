@@ -23,7 +23,7 @@
 /** \brief maximum number of worker threads */
 #define MAX_WORKERS    8
 
-/** \brief maximum number of filens */
+/** \brief maximum number of files */
 #define MAX_FILES  6
 
 /** \brief maximum file size */
