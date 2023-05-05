@@ -1,10 +1,31 @@
-#include "main.h"
+#include "prog1.h"
 
-static const int RANK_DISPATCHER = 0;
+typedef struct TextStruct
+{
+    char *path;
+    int id;
+    TextResult results;
+
+} TextStruct;
+
+typedef struct WorkerTask
+{
+    int id;
+    Chunk chunk;
+} WorkerTask;
+
+typedef struct WorkerResult
+{
+    int id;
+    TextResult results;
+} WorkerResult;
 
 static const unsigned int WORK_TO_DO = 0;
 static const unsigned int NO_MORE_WORK = 1;
 static const unsigned int EXECUTE_ERROR = 2;
+
+/** \brief print proper use of the program parameters and arguments */
+static void printUsage(char *cmdName);
 
 /**
  *  \brief Process execution.
@@ -80,6 +101,7 @@ int main(int argc, char *argv[]) {
         int nWorkers = nProcesses - 1;             /* number of workers(number of processes - 1) */
         int nWorkersNow; /* number of workers necessary to a current iteration */
 
+        /* MPI variables */
         MPI_Request reqSend[nWorkers], reqRec[nWorkers];
         bool allMsgRec, recVal;
         bool msgRec[nWorkers];
@@ -214,8 +236,6 @@ int main(int argc, char *argv[]) {
             MPI_Finalize();
             exit(EXIT_FAILURE);
         }
-
-        /* initialise each textStruct */
         for (int i = 0; i < nFiles; i++) {
             file = (fileSpace + i);
             file->path = files[i];
@@ -225,7 +245,7 @@ int main(int argc, char *argv[]) {
             maxNumTasks += ((int) (get_file_size(file->path)) / maxChunkBytes) + 1;
         }
 
-        /* initialise tasks */
+        /* Generate tasks */
         if ((tmpTaskSpace = (WorkerTask *) malloc(maxNumTasks * sizeof(WorkerTask))) == NULL) {
             fprintf(stderr, "error on allocating space to the tasks data array\n");
             workStatus = EXECUTE_ERROR;
@@ -236,8 +256,6 @@ int main(int argc, char *argv[]) {
             MPI_Finalize();
             exit(EXIT_FAILURE);
         }
-
-        /* Generate tasks */
         nTasks = 0;
         while (filePointer < nFiles) {
             file = (fileSpace + filePointer);
@@ -249,7 +267,6 @@ int main(int argc, char *argv[]) {
             }
             filePointer++;
         }
-
         if ((taskSpace = (WorkerTask *) malloc(nTasks * sizeof(WorkerTask))) == NULL) {
             fprintf(stderr, "error on allocating space to the tasks data array\n");
             workStatus = EXECUTE_ERROR;
@@ -327,8 +344,7 @@ int main(int argc, char *argv[]) {
         }
 
         printf("\nElapsed time multi thread = %.6fs\n\n", get_delta_time());
-        for (int i = 0; i < nFiles; i++) /* print results */
-        {
+        for (int i = 0; i < nFiles; i++) { /* print results */
             printf("id: %d\n", fileSpace[i].id);
             print_results(files[i], fileSpace[i].results);
             printf("\n");
@@ -344,11 +360,11 @@ int main(int argc, char *argv[]) {
             if (workStatus != WORK_TO_DO) {
                 break;
             }
-            MPI_Recv((char *) &task, sizeof(WorkerTask), MPI_BYTE, RANK_DISPATCHER, 0, MPI_COMM_WORLD,
+            MPI_Recv((char *) &task, sizeof(WorkerTask), MPI_BYTE, 0, 0, MPI_COMM_WORLD,
                      MPI_STATUS_IGNORE);
             result.id = task.id;
             result.results = process_chunk(task.chunk);
-            MPI_Send((char *) &result, sizeof(WorkerResult), MPI_BYTE, RANK_DISPATCHER, 0, MPI_COMM_WORLD);
+            MPI_Send((char *) &result, sizeof(WorkerResult), MPI_BYTE, 0, 0, MPI_COMM_WORLD);
         }
         if (workStatus == NO_MORE_WORK) {
             MPI_Finalize();

@@ -1,5 +1,11 @@
-#include "main.h"
+#include "prog2.h"
 
+/** \brief print proper use of the program parameters and arguments */
+static void printUsage(char *cmdName);
+
+static const unsigned int WORK_TO_DO = 0;
+static const unsigned int NO_MORE_WORK = 1;
+static const unsigned int EXECUTE_ERROR = 0;
 
 int main(int argc, char *argv[]) {
     int rank, nProcesses, globalNProcesses, nProcessesNow;
