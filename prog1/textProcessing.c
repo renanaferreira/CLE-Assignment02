@@ -55,6 +55,13 @@ bool isEqual(UTF8Character char01, UTF8Character char02) {
     return true;
 }
 
+/**
+* \brief Checks if the given UTF8 character is a word character.
+*
+* \param character The UTF8 character to be checked.
+*
+* \return true if the given character is word character, false otherwise.
+*/
 bool isWordCharacter(UTF8Character character) {
     if (isWhitespace(character))
         return false;
@@ -72,6 +79,13 @@ bool isWordCharacter(UTF8Character character) {
     return true;
 }
 
+/**
+* \brief Checks if the given UTF8 character is alphanumeric.
+*
+* \param character The UTF8 character to be checked.
+*
+* \return true if the given character is alphanumeric, false otherwise.
+*/
 bool isAlphanumeric(UTF8Character character) {
     if (isConsonant(character)) {
         return true;
@@ -85,6 +99,13 @@ bool isAlphanumeric(UTF8Character character) {
     return false;
 }
 
+/**
+* \brief Checks if the given UTF8 character is a consonant.
+*
+* \param character The UTF8 character to be checked.
+*
+* \return true if the given character is a consonant, false otherwise.
+*/
 bool isConsonant(UTF8Character character) {
     if (isVowel(character)) {
         return false;
@@ -104,6 +125,13 @@ bool isConsonant(UTF8Character character) {
     return false;
 }
 
+/**
+* \brief Checks if the given UTF8 character is a vowel.
+*
+* \param character The UTF8 character to be checked.
+*
+* \return true if the given character is a vowel, false otherwise.
+*/
 bool isVowel(UTF8Character character) {
     if (isVowelA(character))
         return true;
@@ -121,6 +149,13 @@ bool isVowel(UTF8Character character) {
     return false;
 }
 
+/**
+* \brief Checks if the given UTF8 character is a number.
+*
+* \param character The UTF8 character to be checked.
+*
+* \return true if the given character is a number, false otherwise.
+*/
 bool isNumber(UTF8Character character) {
     if (character.length != 1)
         return false;
@@ -131,6 +166,13 @@ bool isNumber(UTF8Character character) {
     return false;
 }
 
+/**
+* \brief Checks if the given UTF8 character is a vowel A.
+*
+* \param character The UTF8 character to be checked.
+*
+* \return true if the given character is a vowel A, false otherwise.
+*/
 bool isVowelA(UTF8Character character) {
     // Standard A
     if (character.length == 1) {
@@ -154,6 +196,13 @@ bool isVowelA(UTF8Character character) {
     return false;
 }
 
+/**
+* \brief Checks if the given UTF8 character is a vowel E.
+*
+* \param character The UTF8 character to be checked.
+*
+* \return true if the given character is a vowel E, false otherwise.
+*/
 bool isVowelE(UTF8Character character) {
     if (character.length == 1) { // Standard E
         if (character.character[0] == 0x45) { // E upper
@@ -174,6 +223,13 @@ bool isVowelE(UTF8Character character) {
     return false;
 }
 
+/**
+* \brief Checks if the given UTF8 character is a vowel I.
+*
+* \param character The UTF8 character to be checked.
+*
+* \return true if the given character is a vowel I, false otherwise.
+*/
 bool isVowelI(UTF8Character character) {
     // Standard I
     if (character.length == 1) {
@@ -198,6 +254,13 @@ bool isVowelI(UTF8Character character) {
     return false;
 }
 
+/**
+* \brief Checks if the given UTF8 character is a vowel O.
+*
+* \param character The UTF8 character to be checked.
+*
+* \return true if the given character is a vowel O, false otherwise.
+*/
 bool isVowelO(UTF8Character character) {
     // Standard O
     if (character.length == 1) {
@@ -222,6 +285,13 @@ bool isVowelO(UTF8Character character) {
     return false;
 }
 
+/**
+* \brief Checks if the given UTF8 character is a vowel U.
+*
+* \param character The UTF8 character to be checked.
+*
+* \return true if the given character is a vowel U, false otherwise.
+*/
 bool isVowelU(UTF8Character character) {
     // Standard U
     if (character.length == 1) {
@@ -246,6 +316,13 @@ bool isVowelU(UTF8Character character) {
     return false;
 }
 
+/**
+* \brief Checks if the given UTF8 character is a vowel Y.
+*
+* \param character The UTF8 character to be checked.
+*
+* \return true if the given character is a vowel Y, false otherwise.
+*/
 bool isVowelY(UTF8Character character) {
     // Standard Y
     if (character.length == 1) {
@@ -274,6 +351,14 @@ bool isVowelY(UTF8Character character) {
     return false;
 }
 
+/**
+ * \brief Checks if the given UTF8 character is a merger character, which means it can be combined with other
+ * characters to form a ligature or a combined character.
+ *
+ * \param character The UTF8 character to be checked.
+ *
+ * \return true if the given character is a merger character, false otherwise.
+ */
 bool isMerger(UTF8Character character) {
     if (character.length == 1) {
         if (character.character[0] == 0x27) { // apostrophe
@@ -296,6 +381,13 @@ bool isMerger(UTF8Character character) {
     return false;
 }
 
+/**
+ * \brief Checks if the given UTF8 character is a punctuation character.
+ *
+ * \param character The UTF8 character to be checked.
+ *
+ * \return true if the given character is a punctuation character, false otherwise.
+ */
 bool isPunctuation(UTF8Character character) {
     if (character.length == 1) {
         if (character.character[0] == 0x21) { // exclamation mark
@@ -333,6 +425,13 @@ bool isPunctuation(UTF8Character character) {
     return false;
 }
 
+/**
+ * \brief Checks if the given UTF8 character is a separation character.
+ *
+ * \param character The UTF8 character to be checked.
+ *
+ * \return true if the given character is a separation character, false otherwise.
+ */
 bool isSeparation(UTF8Character character) {
     if (character.length == 1) {
         // quotation mark
@@ -388,6 +487,13 @@ bool isSeparation(UTF8Character character) {
     return false;
 }
 
+/**
+ * \brief Checks if the given UTF8 character is an underscore.
+ *
+ * \param character The UTF8 character to be checked.
+ *
+ * \return true if the given character is an underscore, false otherwise.
+ */
 bool isWhitespace(UTF8Character character) {
     if (character.length == 1) {
         // tab
@@ -411,6 +517,13 @@ bool isWhitespace(UTF8Character character) {
     return false;
 }
 
+/**
+ * \brief Checks if the given UTF8 character is an underscore.
+ *
+ * \param character The UTF8 character to be checked.
+ *
+ * \return true if the given character is an underscore, false otherwise.
+ */ 
 bool isUnderscore(UTF8Character character) {
     // Underscore
     if (character.length == 1) {
@@ -422,6 +535,13 @@ bool isUnderscore(UTF8Character character) {
     return false;
 }
 
+/**
+ * \brief Checks if a given UTF8 character is a C-cedilla.
+ *
+ * \param character The UTF8 character to check.
+ *
+ * \return True if the character is a C-cedilla, false otherwise.
+ */
 bool isCedilla(UTF8Character character) {
     if (character.length == 2) {
         if (character.character[0] == 0xC3) {
@@ -439,6 +559,13 @@ bool isCedilla(UTF8Character character) {
     return false;
 }
 
+/**
+ * \brief Determines the size of a UTF8 character given its first byte.
+ *
+ * \param first_byte The first byte of the UTF8 character to determine the size of.
+ *
+ * \return The size of the UTF8 character in bytes, or -1 if the first byte is invalid.
+ */
 int getCharSize(unsigned char first_byte) {
     if ((1 << 7) & first_byte) {
         if ((1 << 6) & first_byte) {
@@ -460,6 +587,11 @@ int getCharSize(unsigned char first_byte) {
     return -1;
 }
 
+/**
+ * \brief Prints the hexadecimal representation of a given UTF8Character object to the console.
+ *
+ * \param character The UTF8Character object to print.
+ */
 void printChar(UTF8Character character) {
     printf("0x");
     for (int i = 0; i < character.length; i++) {
@@ -467,6 +599,12 @@ void printChar(UTF8Character character) {
     }
 }
 
+/**
+ * \brief Initializes and returns a TextResult object with default values.
+ *        The object represents the final result of a text analysis.
+ *
+ * \return The initialized TextResult object.
+ */
 TextResult get_initial_result() {
     TextResult result;
     result.nWords = 0;
@@ -476,6 +614,12 @@ TextResult get_initial_result() {
     return result;
 }
 
+/**
+ * \brief Initializes and returns a TextPartialResult object with default values.
+ *        The object represents the partial result of a text analysis at a given point in the text.
+ *
+ * \return The initialized TextPartialResult object.
+ */
 TextPartialResult get_initial_partial_result() {
     TextPartialResult partialResult;
     partialResult.inWord = false;
@@ -486,6 +630,14 @@ TextPartialResult get_initial_partial_result() {
     return partialResult;
 }
 
+/**
+ * \brief Given a UTF8Character, determines which vowel it represents (if any) and returns its index.
+ *        If the character is not a vowel, returns -1.
+ *
+ * \param character The UTF8Character to analyze.
+ *
+ * \return The index of the vowel represented by the character, or -1 if the character is not a vowel.
+ */
 int get_vowel_idx(UTF8Character character) {
     if (isVowelA(character))
         return A_IDX;
@@ -503,6 +655,13 @@ int get_vowel_idx(UTF8Character character) {
     return -1;
 }
 
+/**
+ * \brief Prints the results of a text analysis to the console, including the file name, total
+ *        number of words, and number of words containing each vowel.
+ *
+ * \param filename The name of the file being analyzed.
+ * \param results The results of the text analysis.
+ */
 void print_results(char *filename, TextResult results) {
     printf("File name: %s\n", filename);
     printf("Total number of words = %d\n", results.nWords);
@@ -516,6 +675,15 @@ void print_results(char *filename, TextResult results) {
     printf("\n");
 }
 
+/**
+ * \brief Combines information from two TextResult objects to create a new one that represents the
+ *        combined analysis of a larger text.
+ *
+ * \param first The first TextResult object to be combined.
+ * \param second The second TextResult object to be combined.
+ *
+ * \return A new TextResult object that contains the combined analysis of the input objects.
+ */
 TextResult reduce(TextResult first, TextResult second) {
     TextResult result;
     result.nWords = first.nWords + second.nWords;
@@ -525,6 +693,13 @@ TextResult reduce(TextResult first, TextResult second) {
     return result;
 }
 
+/**
+ * \brief Processes a given chunk of text and returns the result of the analysis.
+ *
+ * \param chunk The chunk of text to be processed.
+ *
+ * \return The result of the analysis on the given text chunk.
+ */ 
 TextResult process_chunk(Chunk chunk) {
     UTF8Character character;
     TextPartialResult result = get_initial_partial_result();
@@ -540,6 +715,14 @@ TextResult process_chunk(Chunk chunk) {
     return result.results;
 }
 
+/**
+ * \brief Gets the next UTF-8 character from a Chunk structure and returns it as a UTF8Character struct.
+ *
+ * \param chunk A pointer to a Chunk structure from which to get the next character.
+ *
+ * \return A UTF8Character struct representing the next UTF-8 character in the Chunk structure.
+ *         Returns NULL_CHAR if there are no more characters to get.
+ */ 
 UTF8Character get_char(Chunk *chunk) {
     if (chunk->position == chunk->length) {
         return NULL_CHAR;
@@ -569,6 +752,12 @@ UTF8Character get_char(Chunk *chunk) {
     return character;
 }
 
+/**
+ * \brief Processes a UTF-8 character and updates a TextPartialResult structure with relevant information.
+ *
+ * \param character The UTF-8 character to be processed.
+ * \param results A pointer to a TextPartialResult structure to be updated.
+ */ 
 void process_char(UTF8Character character, TextPartialResult *results) {
     int vowelIdx;
 
@@ -612,6 +801,14 @@ void set_to_false(int n, bool array[])
     }
 }
 
+/**
+ * \brief Reads data from a file and returns a Chunk structure containing the bytes read.
+ *
+ * \param fp A pointer to the file to be read.
+ * \param maxChunkBytes The maximum number of bytes to be read from the file.
+ *
+ * \return A Chunk structure containing the bytes read from the file.
+ */ 
 Chunk get_chunk(FILE *fp, int maxChunkBytes) {
     UTF8Character character;
     unsigned char byte;
