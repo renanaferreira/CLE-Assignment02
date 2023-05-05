@@ -4,10 +4,12 @@
 static void printUsage(char *cmdName);
 
 static const unsigned int WORK_TO_DO = 0;
-static const unsigned int NO_MORE_WORK = 1;
-static const unsigned int EXECUTE_ERROR = 0;
+static const unsigned int EXECUTE_ERROR = 1;
 
 int main(int argc, char *argv[]) {
+    unsigned int *workStatus = malloc(sizeof(unsigned int));
+    int *listLength = malloc(sizeof(int));
+
     int rank, nProcesses, globalNProcesses, nProcessesNow;
 
     MPI_Comm presentComm, nextComm;
@@ -15,25 +17,30 @@ int main(int argc, char *argv[]) {
     int gMembersId[MAX_NUMBER_WORKERS];
 
     unsigned int nFiles = 0; /* number of files */
-    char *pathSpace[MAX_FILES];  /* file path array */
-    List *listSpace;  /* list structure array */
-    int list_length, seq_length;
+
+    int seq_length;
     int nIter;
-    int *sendListSeq = NULL;
+
     int *recvListSeq;
 
-    /* reference handlers */
-    char *path;
-    List *list;
+    /* dispatcher variables */
+    List *listSpace = NULL;  /* list structure array */
+    int *sendListSeq = NULL;
+    char **pathSpace = NULL;  /* file path array */
 
     MPI_Init(&argc, &argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &nProcesses);
     globalNProcesses = nProcesses;
-    for (int j = 0; j < MAX_NUMBER_WORKERS; j++)
-    {
+    *workStatus = WORK_TO_DO;
+    for (int j = 0; j < MAX_NUMBER_WORKERS; j++) {
         gMembersId[j] = j;
     }
+
+    if(rank == 0) {
+        pathSpace = (char **) malloc(MAX_FILES * sizeof(char *));
+    }
+
 
     /* process command line options */
     int opt; /* selected option */
@@ -53,8 +60,8 @@ int main(int argc, char *argv[]) {
     }
     do {
         switch ((opt = getopt(argc, argv, "f:h"))) {
-            case 'f':                 /* File */
-                if (optarg[0] == '-') /* file path is missing */
+            case 'f':                 /* file */
+                if (optarg[0] == '-') /* filename is missing */
                 {
                     if(rank == 0) {
                         fprintf(stderr, "%s: file name is missing\n", basename(argv[0]));
@@ -78,7 +85,10 @@ int main(int argc, char *argv[]) {
                     MPI_Finalize();
                     exit(EXIT_FAILURE);
                 }
-                pathSpace[nFiles++] = optarg;
+                if(rank == 0) {
+                    pathSpace[nFiles] = optarg;
+                }
+                nFiles++;
                 break;
             case 'h': /* help mode */
                 if(rank == 0) {
@@ -110,23 +120,30 @@ int main(int argc, char *argv[]) {
         /* initialise fileSpace region */
         if ((listSpace = malloc(nFiles * sizeof(List))) == NULL) {
             fprintf(stderr, "error on allocating space to the file space memory region\n");
-            MPI_Abort(MPI_COMM_WORLD, 1);
-            exit(EXIT_FAILURE);
+            *workStatus = EXECUTE_ERROR;
         }
+    }
+    MPI_Bcast(workStatus, sizeof(unsigned int), MPI_UNSIGNED, 0, MPI_COMM_WORLD);
+    if(*(workStatus) == EXECUTE_ERROR) {
+        MPI_Finalize();
+        exit(EXIT_FAILURE);
+    }
+
+    if(rank == 0) {
         (void) get_delta_time();
     }
 
-
-
     /* start sorting process */
     for(int i = 0; i < nFiles; i++) {
-        path = pathSpace[i];
-        list_length = get_list_size(path);
 
         if(rank == 0) {
+            char *path = pathSpace[i];
+            *listLength = get_list_size(path);
             sendListSeq = create_list_sequence(path);
         }
-        recvListSeq = malloc(list_length * sizeof(int));
+        MPI_Bcast(listLength, sizeof(int), MPI_INT, 0, MPI_COMM_WORLD);
+
+        recvListSeq = malloc(*(listLength) * sizeof(int));
 
         nProcessesNow = globalNProcesses;
         presentComm = MPI_COMM_WORLD;
@@ -134,7 +151,7 @@ int main(int argc, char *argv[]) {
 
         nIter = (int)(log2(nProcessesNow) + 1.1);
         for(int j = 0; j < nIter; j++) {
-            seq_length = list_length / nProcessesNow;
+            seq_length = *(listLength) / nProcessesNow;
             if(j > 0) {
                 MPI_Group_incl(presentGroup, nProcessesNow, gMembersId, &nextGroup);
                 MPI_Comm_create(presentComm, nextGroup, &nextComm);
@@ -170,8 +187,8 @@ int main(int argc, char *argv[]) {
 
         if(rank == 0)
         {
-            list = (listSpace + i);
-            *(list) = copy_list_sequence(list_length, recvListSeq);
+            List *list = (listSpace + i);
+            *(list) = copy_list_sequence(*listLength, recvListSeq);
             free(sendListSeq);
         }
 
