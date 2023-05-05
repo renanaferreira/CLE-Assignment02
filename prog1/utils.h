@@ -18,7 +18,6 @@
 long get_file_size(char *path);
 bool is_file_open(char *path);
 double get_delta_time(void);
-void set_to_false(int length, bool array[]);
 int *get_workers(int size, int rank_dispatcher);
 
 #endif /* UTILS_H */

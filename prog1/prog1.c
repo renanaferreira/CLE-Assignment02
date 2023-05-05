@@ -1,5 +1,14 @@
 #include "prog1.h"
 
+/** \brief maximum number of worker processes */
+#define MAX_WORKERS    8
+
+/** \brief maximum number of files */
+#define MAX_FILES  6
+
+/** \brief maximum file size */
+#define MAX_FILE_SIZE  100000
+
 typedef struct TextStruct
 {
     char *path;

@@ -27,20 +27,6 @@ double get_delta_time(void)
 }
 
 /**
- *  \brief Set each element of a boolean array to false.
- *
- *  \param n The size of the boolean array.
- *  \param array The boolean array to be set to false.
- */
-void set_to_false(int n, bool array[])
-{
-    for (int i = 0; i < n; i++)
-    {
-        array[i] = false;
-    }
-}
-
-/**
  *  \brief Get the size of a file in bytes.
  *
  *  \param path The path to the file to be checked.

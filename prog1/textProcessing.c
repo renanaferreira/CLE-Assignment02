@@ -36,6 +36,7 @@ static TextPartialResult get_initial_partial_result();
 static int get_vowel_idx(UTF8Character character);
 static UTF8Character get_char(Chunk *chunk);
 static void process_char(UTF8Character character, TextPartialResult *results);
+static void set_to_false(int length, bool array[]);
 
 static const UTF8Character NULL_CHAR = {.length = -1};
 
@@ -594,6 +595,20 @@ void process_char(UTF8Character character, TextPartialResult *results) {
                 results->vowelPresence[vowelIdx] = true;
             }
         }
+    }
+}
+
+/**
+ *  \brief Set each element of a boolean array to false.
+ *
+ *  \param n The size of the boolean array.
+ *  \param array The boolean array to be set to false.
+ */
+void set_to_false(int n, bool array[])
+{
+    for (int i = 0; i < n; i++)
+    {
+        array[i] = false;
     }
 }
 
