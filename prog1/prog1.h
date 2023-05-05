@@ -11,6 +11,6 @@
 
 #include "consts.h"
 #include "textProcessing.h"
-#include "utf8character.h"
+#include "utils.h"
 
 #endif /* PROG1_H */

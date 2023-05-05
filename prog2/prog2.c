@@ -1,5 +1,8 @@
 #include "prog2.h"
 
+#define MAX_NUMBER_PROCESSES 8 /* maximum number of processes */
+#define MAX_FILES 6            /* maximum number of files */
+
 /** \brief print proper use of the program parameters and arguments */
 static void printUsage(char *cmdName);
 
@@ -14,7 +17,7 @@ int main(int argc, char *argv[]) {
 
     MPI_Comm presentComm, nextComm;
     MPI_Group presentGroup, nextGroup;
-    int gMembersId[MAX_NUMBER_WORKERS];
+    int gMembersId[MAX_NUMBER_PROCESSES];
 
     unsigned int nFiles = 0; /* number of files */
 
@@ -33,7 +36,7 @@ int main(int argc, char *argv[]) {
     MPI_Comm_size(MPI_COMM_WORLD, &nProcesses);
     globalNProcesses = nProcesses;
     *workStatus = WORK_TO_DO;
-    for (int j = 0; j < MAX_NUMBER_WORKERS; j++) {
+    for (int j = 0; j < MAX_NUMBER_PROCESSES; j++) {
         gMembersId[j] = j;
     }
 
@@ -51,7 +54,7 @@ int main(int argc, char *argv[]) {
         MPI_Finalize();
         exit(EXIT_FAILURE);
     }
-    if (nProcesses > MAX_NUMBER_WORKERS) { /* maximum number of workers surpass */
+    if (nProcesses > MAX_NUMBER_PROCESSES) { /* maximum number of workers surpass */
         if(rank == 0) {
             printf("Too many processes! It should be a power of 2, less or equal to 8.\n");
         }

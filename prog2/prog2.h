@@ -9,7 +9,6 @@
 #include <string.h>
 #include <libgen.h>
 
-#include "consts.h"
 #include "sorting.h"
 #include "utils.h"
 
