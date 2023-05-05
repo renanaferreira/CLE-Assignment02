@@ -26,10 +26,9 @@ typedef struct Chunk
 } Chunk;
 
 extern TextResult get_initial_result();
-extern TextResult textProcess(char *filepath, int maxChunkBytes);
 extern Chunk get_chunk(FILE *fp, int maxChunkBytes);
 extern TextResult process_chunk(Chunk chunk);
 extern TextResult reduce(TextResult result01, TextResult result02);
 extern void print_results(char *path, TextResult results);
-extern void print_char(UTF8Character character);
+
 #endif /* TEXT_PROCESSING_H */
