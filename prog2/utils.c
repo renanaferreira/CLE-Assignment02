@@ -18,6 +18,13 @@ double get_delta_time(void)
     return (double)(t1.tv_sec - t0.tv_sec) + 1.0e-9 * (double)(t1.tv_nsec - t0.tv_nsec);
 }
 
+/**
+ * \brief Check if a file can be opened for reading in binary mode.
+ *
+ * \param path A null-terminated string representing the file path to be checked.
+ * 
+ * \return true if the file can be opened for reading, false otherwise.
+ */
 bool is_file_open(char *path)
 {
     FILE *fp = fopen(path, "rb");
@@ -29,11 +36,25 @@ bool is_file_open(char *path)
     return true;
 }
 
+/**
+ * \brief Check if a given double is an integer.
+ *
+ * \param x A double value to be checked.
+ * 
+ * \return true if the double value is an integer, false otherwise.
+ */
 bool is_int(double x)
 {
     return floor(x) == x;
 }
 
+/**
+ * \brief Convert a boolean value to a corresponding string representation.
+ *
+ * \param value A boolean value to be converted to a string.
+ * 
+ * \return "true" if the boolean value is true, "false" otherwise.
+ */
 char *get_char_bool(bool value)
 {
     if (value)
@@ -59,6 +80,14 @@ void print_results(char *path, List list)
     }
 }
 
+/**
+ * \brief Print the validation results of a list sequence.
+ *
+ * \param path A null-terminated string representing the file path of the list.
+ * \param list A List struct containing the list to be validated.
+ * 
+ * \return void
+ */
 void print_bool_list(bool *array, int n)
 {
     printf("[%s", get_char_bool(array[0]));
@@ -69,6 +98,14 @@ void print_bool_list(bool *array, int n)
     printf("]");
 }
 
+/**
+ * \brief Get an array of workers' ranks, excluding the dispatcher's rank.
+ *
+ * \param size The total number of ranks in the MPI communicator.
+ * \param rank_dispatcher The rank of the dispatcher process.
+ * 
+ * \return A dynamically allocated array of integers containing the ranks of all workers, except the dispatcher.
+ */
 int *get_workers(int size, int rank_dispatcher)
 {
     int *workers = (int *)malloc((size-1) * sizeof(int));

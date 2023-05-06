@@ -1,11 +1,3 @@
-/**
- *  \file utils.c (source file)
- *  \brief source file containing declaration utility functions for our problem.
- *
- *  This file contains declaractions for several utility functions that may be useful
- *  in a computer intensive problems. These functions include timing functions, file I/O functions,
- *  and functions for working with process ranks.
- */
 #include "utils.h"
 
 /**
