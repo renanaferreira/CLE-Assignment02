@@ -78,16 +78,8 @@ int main(int argc, char *argv[]) {
         pathSpace = (char **) malloc(MAX_FILES * sizeof(char *));
     }
 
-
     /* process command line options */
     int opt; /* selected option */
-    if (nProcesses < 2) { /* This program requires at least 2 processes */
-        if(rank == 0) {
-            fprintf(stderr, "To run this program is necessary at least 2 processes.\n");
-        }
-        MPI_Finalize();
-        exit(EXIT_FAILURE);
-    }
     if (nProcesses > MAX_NUMBER_PROCESSES) { /* maximum number of workers surpass */
         if(rank == 0) {
             printf("Too many processes! It should be a power of 2, less or equal to 8.\n");
@@ -192,13 +184,6 @@ int main(int argc, char *argv[]) {
             if(j > 0) {
                 MPI_Group_incl(presentGroup, nProcessesNow, gMembersId, &nextGroup);
                 MPI_Comm_create(presentComm, nextGroup, &nextComm);
-                int result;
-                MPI_Comm_compare(presentComm, MPI_COMM_WORLD, &result);
-                if(result != MPI_IDENT) /* if presentComm is not MPI_COMM_WORLD */
-                {
-                    MPI_Group_free(&presentGroup);
-                    MPI_Comm_free(&presentComm);
-                }
                 presentGroup = nextGroup;
                 presentComm = nextComm;
                 if (rank >= nProcessesNow)
@@ -230,7 +215,6 @@ int main(int argc, char *argv[]) {
         }
 
         free(recvListSeq);
-        MPI_Barrier(MPI_COMM_WORLD);
     }
 
     if (rank == 0)
