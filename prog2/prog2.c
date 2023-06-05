@@ -1,7 +1,14 @@
-#include "prog2.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <getopt.h>
+#include <mpi.h>
+#include <math.h>
+#include <string.h>
+#include <libgen.h>
+
+#include "sorting.h"
 
 #define MAX_NUMBER_PROCESSES 8 /* maximum number of processes */
-#define MAX_FILES 6            /* maximum number of files */
 
 /** \brief print proper use of the program parameters and arguments */
 static void printUsage(char *cmdName);
@@ -45,43 +52,35 @@ static const unsigned int EXECUTE_ERROR = 1;
  */
 int main(int argc, char *argv[]) {
     unsigned int *workStatus = malloc(sizeof(unsigned int));
-    int *listLength = malloc(sizeof(int));
-
-    int rank, nProcesses, globalNProcesses, nProcessesNow;
+    int rank, nProcesses, nProcessesNow;
 
     MPI_Comm presentComm, nextComm;
     MPI_Group presentGroup, nextGroup;
     int gMembersId[MAX_NUMBER_PROCESSES];
 
-    unsigned int nFiles = 0; /* number of files */
-
     int seq_length;
     int nIter;
 
-    int *recvListSeq;
+    int *recListSeq;
 
     /* dispatcher variables */
-    List *listSpace = NULL;  /* list structure array */
+    int listLength;
+    int *mainList = NULL;
     int *sendListSeq = NULL;
-    char **pathSpace = NULL;  /* file path array */
+    char *filepath = NULL;
 
     MPI_Init(&argc, &argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &nProcesses);
-    globalNProcesses = nProcesses;
     *workStatus = WORK_TO_DO;
     for (int j = 0; j < MAX_NUMBER_PROCESSES; j++) {
         gMembersId[j] = j;
     }
 
-    if(rank == 0) {
-        pathSpace = (char **) malloc(MAX_FILES * sizeof(char *));
-    }
-
     /* process command line options */
     int opt; /* selected option */
     if (nProcesses > MAX_NUMBER_PROCESSES) { /* maximum number of workers surpass */
-        if(rank == 0) {
+        if (rank == 0) {
             printf("Too many processes! It should be a power of 2, less or equal to 8.\n");
         }
         MPI_Finalize();
@@ -92,41 +91,32 @@ int main(int argc, char *argv[]) {
             case 'f':                 /* file */
                 if (optarg[0] == '-') /* filename is missing */
                 {
-                    if(rank == 0) {
+                    if (rank == 0) {
                         fprintf(stderr, "%s: file name is missing\n", basename(argv[0]));
                         printUsage(basename(argv[0]));
                     }
                     MPI_Finalize();
                     exit(EXIT_FAILURE);
                 }
-                if (nFiles > MAX_FILES) /* Surpassing number of files */
-                {
-                    if(rank == 0) {
-                        fprintf(stderr, "%s: maximum number of files is %d\n", basename(argv[0]), MAX_FILES);
-                    }
-                    MPI_Finalize();
-                    exit(EXIT_FAILURE);
-                }
                 if (!is_file_open(optarg)) {
-                    if(rank == 0) {
+                    if (rank == 0) {
                         fprintf(stderr, "%s: file %s cannot be open.\n", basename(argv[0]), optarg);
                     }
                     MPI_Finalize();
                     exit(EXIT_FAILURE);
                 }
-                if(rank == 0) {
-                    pathSpace[nFiles] = optarg;
+                if (rank == 0) {
+                    filepath = optarg;
                 }
-                nFiles++;
                 break;
             case 'h': /* help mode */
-                if(rank == 0) {
+                if (rank == 0) {
                     printUsage(basename(argv[0]));
                 }
                 MPI_Finalize();
                 exit(EXIT_SUCCESS);
             case '?': /* invalid option */
-                if(rank == 0) {
+                if (rank == 0) {
                     fprintf(stderr, "%s: invalid option\n", basename(argv[0]));
                     printUsage(basename(argv[0]));
                 }
@@ -137,7 +127,7 @@ int main(int argc, char *argv[]) {
         }
     } while (opt != -1);
     if (optind < argc) {
-        if(rank == 0) {
+        if (rank == 0) {
             fprintf(stderr, "%s: invalid format\n", basename(argv[0]));
             printUsage(basename(argv[0]));
         }
@@ -145,89 +135,100 @@ int main(int argc, char *argv[]) {
         exit(EXIT_FAILURE);
     }
 
+    listLength = get_list_size(filepath);
+
     if (rank == 0) { /* dispatcher */
-        /* initialise fileSpace region */
-        if ((listSpace = malloc(nFiles * sizeof(List))) == NULL) {
+        /* initialise list */
+        if ((mainList = malloc(listLength * sizeof(List))) == NULL) {
             fprintf(stderr, "error on allocating space to the file space memory region\n");
             *workStatus = EXECUTE_ERROR;
         }
     }
     MPI_Bcast(workStatus, sizeof(unsigned int), MPI_UNSIGNED, 0, MPI_COMM_WORLD);
-    if(*(workStatus) == EXECUTE_ERROR) {
+    if (*(workStatus) == EXECUTE_ERROR) {
         MPI_Finalize();
         exit(EXIT_FAILURE);
     }
 
-    if(rank == 0) {
-        (void) get_delta_time();
-    }
 
     /* start sorting process */
-    for(int i = 0; i < nFiles; i++) {
-
-        if(rank == 0) {
-            char *path = pathSpace[i];
-            *listLength = get_list_size(path);
-            sendListSeq = create_list_sequence(path);
-        }
-        MPI_Bcast(listLength, sizeof(int), MPI_INT, 0, MPI_COMM_WORLD);
-
-        recvListSeq = malloc(*(listLength) * sizeof(int));
-
-        nProcessesNow = globalNProcesses;
-        presentComm = MPI_COMM_WORLD;
-        MPI_Comm_group(presentComm, &presentGroup);
-
-        nIter = (int)(log2(nProcessesNow) + 1.1);
-        for(int j = 0; j < nIter; j++) {
-            seq_length = *(listLength) / nProcessesNow;
-            if(j > 0) {
-                MPI_Group_incl(presentGroup, nProcessesNow, gMembersId, &nextGroup);
-                MPI_Comm_create(presentComm, nextGroup, &nextComm);
-                presentGroup = nextGroup;
-                presentComm = nextComm;
-                if (rank >= nProcessesNow)
-                {
-                    break;
-                }
-            }
-            MPI_Comm_size(presentComm, &nProcesses);
-            /* send: Scatter */
-            MPI_Scatter(sendListSeq,seq_length,MPI_INT,
-                        recvListSeq,seq_length,MPI_INT,0,presentComm);
-            /* sorting process */
-            if(j > 0){
-                sort_sequence(seq_length, recvListSeq);
-            } else {
-                bitonic_sort_sequence(seq_length, recvListSeq);
-            }
-            /*receive: Gather */
-            MPI_Gather(recvListSeq, seq_length, MPI_INT,
-                       sendListSeq, seq_length, MPI_INT, 0, presentComm);
-            nProcessesNow = nProcessesNow >> 1;
-        }
-
-        if(rank == 0)
-        {
-            List *list = (listSpace + i);
-            *(list) = copy_list_sequence(*listLength, recvListSeq);
-            free(sendListSeq);
-        }
-
-        free(recvListSeq);
+    if (rank == 0) {
+        (void) get_delta_time();
+        sendListSeq = create_list(filepath);
     }
 
-    if (rank == 0)
-    {
+    recListSeq = (int *) malloc(listLength * sizeof(int));
+
+    nProcessesNow = nProcesses;
+    presentComm = MPI_COMM_WORLD;
+    MPI_Comm_group(presentComm, &presentGroup);
+
+    nIter = (int) (log2(nProcessesNow) + 1.1);
+    for (int iter = 0; iter < nIter; iter++) {
+        seq_length = listLength / nProcessesNow;
+        printf("%d iter %d\n", rank, iter);
+        if (iter > 0) {
+            MPI_Group_incl(presentGroup, nProcessesNow, gMembersId, &nextGroup);
+            MPI_Comm_create(presentComm, nextGroup, &nextComm);
+            presentGroup = nextGroup;
+            presentComm = nextComm;
+            if (rank >= nProcessesNow) {
+                break;
+            }
+        }
+        MPI_Comm_size(presentComm, &nProcesses);
+        if (rank == 1) {
+            printf("seq_len = %d\n", seq_length);
+        }
+        /* send: Scatter */
+        MPI_Scatter(sendListSeq, seq_length, MPI_INT,
+                    recListSeq, seq_length, MPI_INT, 0, presentComm);
+        /* sorting process */
+        if (iter > 0) {
+            bitonic_sort(recListSeq, seq_length);
+        } else {
+            bitonic_sort(recListSeq, seq_length);
+        }
+        /*receive: Gather */
+        MPI_Gather(recListSeq, seq_length, MPI_INT,
+                   sendListSeq, seq_length, MPI_INT, 0, presentComm);
+        nProcessesNow = nProcessesNow >> 1;
+    }
+    printf("%d - sorted\n", rank);
+
+    if (rank == 0) {
+        printf("é aqui\n");
+        for (int i = 0; i < listLength; i++) {
+            mainList[i] = recListSeq[i];
+        }
+        free(sendListSeq);
+    }
+
+    free(recListSeq);
+
+    if (rank == 0) {
         printf("\nElapsed time multi process = %.6f s\n\n", get_delta_time());
-        for (int i = 0; i < nFiles; i++) { /* print results */
-            print_results(pathSpace[i], listSpace[i]);
-            printf("\n");
-            free((listSpace + i)->sequence);
+        printf("file: %s\n", filepath);
+        bool sorted = true;
+        for (int i = 0; i < listLength - 1; i++) {
+            int num01 = mainList[i];
+            int num02 = mainList[i + 1];
+            if (num01 > num02) {
+                fprintf(stderr, "Error in position %d between element %d and %d\n", i, num01, num02);
+                sorted = false;
+                break;
+            }
         }
-        free(listSpace);
+        if (sorted) {
+            printf("Everything is ok!\n");
+        } else {
+            printf("Fail to sort list\n");
+        }
+        printf("\n");
+        free(mainList);
     }
 
+    printf("%d - finished\n", rank);
     MPI_Finalize();
     exit(EXIT_SUCCESS);
 }

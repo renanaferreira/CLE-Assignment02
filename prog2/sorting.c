@@ -10,81 +10,17 @@
 #include "sorting.h"
 
 /**
- * \brief Sorts a sequence of integers using the bitonic sort algorithm.
- *
- * \param length Length of the sequence to sort.
- * \param sequence Pointer to the start of the sequence.
- */
-void bitonic_sort_sequence(unsigned int length, int *sequence) {
-    for (int base = 2; base <= length; base *= 2)
-    {
-        for (int i = 0; i < length; i += base)
-        {
-            sort_sequence(base, (sequence + i));
-        }
-    }
-}
-
-/**
- * \brief Sorts a sequence of integers using bitonic sort.
- *
- * \param length Length of the sequence.
- * \param sequence Pointer to the sequence of integers.
- */
-void sort_sequence(unsigned int length, int *sequence) {
-    printf("sort_sequence(length=%d)\n", length);
-    for(unsigned int m = 0; m < length/2; m++)
-    {
-        for (unsigned int n = 0; (m + n) < length/2; n++)
-        {
-            printf("iteration(m=%d,n=%d)\n", m, n);
-            if (sequence[m+n] > sequence[length/2 + n])
-            {
-                int temp = sequence[m+n];
-                sequence[m+n] = sequence[length/2 + n];
-                sequence[length/2 + n] = temp;
-            }
-        }
-    }
-    printf("\n\n");
-}
-
-/**
- * \brief Validates if a sequence of integers is sorted in ascending order.
- *
- * \param list The list of integers to validate.
- * 
- * \return Whether the sequence is sorted in ascending order or not.
- */
-bool validate_sequence(List list)
-{
-    for (int i = 0; i < list.length - 1; i++)
-    {
-        int num01 = *(list.sequence + i);
-        int num02 = *(list.sequence + i + 1);
-        if (num01 > num02)
-        {
-            fprintf(stderr,
-                    "Error in position %d between element %d and %d\n", i, num01, num02);
-            return false;
-        }
-    }
-    return true;
-}
-
-/**
  * \brief Prints a list of integers to the standard output.
  *
  * \param list The list of integers to print.
  */
-void print_list(List list)
-{
+void print_list(int *list, unsigned int length) {
     int i;
 
-    printf("[%d", list.sequence[0]);
-    for (i = 1; i < list.length; i++)
+    printf("[%d", list[0]);
+    for (i = 1; i < length; i++)
     {
-        printf(",%d", list.sequence[i]);
+        printf(",%d", list[i]);
     }
     printf("]\n");
 }
@@ -113,33 +49,13 @@ int get_list_size(char *path)
     return size;
 }
 
-
-/**
- * \brief Creates a copy of a list of integers.
- *
- * \param length Length of the input list.
- * \param sequence Pointer to the input list of integers.
- * 
- * \return A new list that contains a copy of the input list.
- */
-List copy_list_sequence(int length, int *sequence) {
-    List new_list;
-    new_list.length = length;
-    new_list.sequence = (int*)malloc(new_list.length * sizeof(int));
-    for (int i = 0; i < new_list.length; i++) {
-        new_list.sequence[i] = sequence[i];
-    }
-    return new_list;
-}
-
-
 /**
 * \brief Reads a list of integers from a binary file and returns it as an integer array.
 *
 * \param filepath The path of the binary file to read.
 * \return An integer array containing the sequence of integers in the binary file.
 */
-int *create_list_sequence(char *filepath) {
+int *create_list(char *filepath) {
     int length;
     int *sequence;
     FILE* fp = fopen(filepath, "rb");
@@ -169,4 +85,81 @@ int *create_list_sequence(char *filepath) {
     }
     fclose(fp);
     return sequence;
+}
+
+/**
+ *  \brief Get the process time that has elapsed since last call of this time.
+ *
+ *  \return process elapsed time
+ */
+double get_delta_time(void)
+{
+    static struct timespec t0, t1;
+
+    t0 = t1;
+    if (clock_gettime(CLOCK_MONOTONIC, &t1) != 0)
+    {
+        perror("clock_gettime");
+        exit(1);
+    }
+    return (double)(t1.tv_sec - t0.tv_sec) + 1.0e-9 * (double)(t1.tv_nsec - t0.tv_nsec);
+}
+
+/**
+ * \brief Check if a file can be opened for reading in binary mode.
+ *
+ * \param path A null-terminated string representing the file path to be checked.
+ *
+ * \return true if the file can be opened for reading, false otherwise.
+ */
+bool is_file_open(char *path)
+{
+    FILE *fp = fopen(path, "rb");
+    if (NULL == fp)
+    {
+        return false;
+    }
+    fclose(fp);
+    return true;
+}
+
+void bitonic_merge(int *list, unsigned int length, bool asc) {
+    unsigned int half_len, nL, m, n, offset, t;
+    unsigned int idx01, idx02;
+
+    half_len = length >> 1; // length / 2
+    nL = 1;
+    for (m = 0; m < (int)log2f((float)length); m++) { // for each subsequence size, such as sub_size=2^m
+        n = 0;
+        offset = 0;
+        while (n < nL) {
+            for (t = 0; t < half_len; t++) {
+
+                idx01 = t + offset;
+                idx02 = t + offset + half_len;
+
+                // CAPS
+                if ((asc && list[idx01] > list[idx02]) || (!(asc) && list[idx01] < list[idx02])) {
+                    int tmp = list[idx01];
+                    list[idx01] = list[idx02];
+                    list[idx02] = tmp;
+                }
+            }
+            offset += (half_len << 1); // offset = offset + (half_len * 2)
+            n += 1;
+        }
+        half_len >>= 1; // half_len = half_len / 2
+        nL <<= 1; // nL = nL * 2
+    }
+}
+
+void bitonic_sort(int *list, unsigned int length) {
+    int sub_size, sub_offset;
+    bool asc;
+    for (sub_size = 2; sub_size <= length; sub_size <<= 1) { // for each subsequence size in the list
+        for (sub_offset = 0; sub_offset < length; sub_offset += sub_size) { // for each subsequence offset
+            asc = (sub_offset / sub_size) % 2 == 0; // divide j by list length to discover its direction
+            bitonic_merge(list + sub_offset, sub_size, asc);
+        }
+    }
 }

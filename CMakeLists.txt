@@ -17,8 +17,6 @@ add_executable(CLE_Assignment02
         prog1/utils.c
         prog1/utils.h
         prog2/prog2.c
-        prog2/prog2.h
         prog2/sorting.c
         prog2/sorting.h
-        prog2/utils.c
-        prog2/utils.h)
+        )
