@@ -13,9 +13,6 @@
 /** \brief print proper use of the program parameters and arguments */
 static void printUsage(char *cmdName);
 
-static const unsigned int WORK_TO_DO = 0;
-static const unsigned int EXECUTE_ERROR = 1;
-
 /**
  *  \brief Process execution.
  *
@@ -51,7 +48,6 @@ static const unsigned int EXECUTE_ERROR = 1;
  *  \return status of operation
  */
 int main(int argc, char *argv[]) {
-    unsigned int *workStatus = malloc(sizeof(unsigned int));
     int rank, nProcesses, nProcessesNow;
 
     MPI_Comm presentComm, nextComm;
@@ -65,15 +61,13 @@ int main(int argc, char *argv[]) {
 
     /* dispatcher variables */
     int listLength;
-    int *mainList = NULL;
     int *sendListSeq = NULL;
     char *filepath = NULL;
 
     MPI_Init(&argc, &argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &nProcesses);
-    *workStatus = WORK_TO_DO;
-    for (int j = 0; j < MAX_NUMBER_PROCESSES; j++) {
+    for (int j = 0; j < nProcesses; j++) {
         gMembersId[j] = j;
     }
 
@@ -105,9 +99,7 @@ int main(int argc, char *argv[]) {
                     MPI_Finalize();
                     exit(EXIT_FAILURE);
                 }
-                if (rank == 0) {
-                    filepath = optarg;
-                }
+                filepath = optarg;
                 break;
             case 'h': /* help mode */
                 if (rank == 0) {
@@ -135,29 +127,55 @@ int main(int argc, char *argv[]) {
         exit(EXIT_FAILURE);
     }
 
-    listLength = get_list_size(filepath);
-
-    if (rank == 0) { /* dispatcher */
-        /* initialise list */
-        if ((mainList = malloc(listLength * sizeof(List))) == NULL) {
-            fprintf(stderr, "error on allocating space to the file space memory region\n");
-            *workStatus = EXECUTE_ERROR;
+    FILE *fp;
+    /* initialise data */
+    if (rank == 0) {  /* initialise list */
+        fp = fopen(filepath, "rb");
+        if (fread(&listLength, sizeof(int), 1, fp) != 1) {
+            if (feof(fp)) {
+                fprintf(stderr, "Unexpected end of file while reading file\n");
+                exit(EXIT_FAILURE);
+            } else if (ferror(fp)) {
+                fprintf(stderr, "Error while reading file\n");
+                exit(EXIT_FAILURE);
+            }
         }
-    }
-    MPI_Bcast(workStatus, sizeof(unsigned int), MPI_UNSIGNED, 0, MPI_COMM_WORLD);
-    if (*(workStatus) == EXECUTE_ERROR) {
-        MPI_Finalize();
-        exit(EXIT_FAILURE);
-    }
-
-
-    /* start sorting process */
-    if (rank == 0) {
-        (void) get_delta_time();
-        sendListSeq = create_list(filepath);
+        // Allocate memory for the sequence of integers in the list
+        sendListSeq = (int*)malloc(listLength * sizeof(int));
+        // Read the sequence of integers from the binary file
+        for (int i = 0; i < listLength; i++) {
+            int* pos = (sendListSeq + i);
+            if (fread(pos, sizeof(int), 1, fp) != 1) {
+                if (feof(fp)) {
+                    fprintf(stderr, "Unexpected end of file while reading file\n");
+                    exit(EXIT_FAILURE);
+                } else if (ferror(fp)) {
+                    fprintf(stderr, "Error while reading file\n");
+                    exit(EXIT_FAILURE);
+                }
+            }
+        }
+        fclose(fp);
+    } else {
+        fp = fopen(filepath, "rb");
+        if (fread(&listLength, sizeof(int), 1, fp) != 1) {
+            if (feof(fp)) {
+                fprintf(stderr, "Unexpected end of file while reading file\n");
+                exit(EXIT_FAILURE);
+            } else if (ferror(fp)) {
+                fprintf(stderr, "Error while reading file\n");
+                exit(EXIT_FAILURE);
+            }
+        }
+        fclose(fp);
     }
 
     recListSeq = (int *) malloc(listLength * sizeof(int));
+
+    /* start sorting process */
+    if(rank == 0) {
+        (void) get_delta_time();
+    }
 
     nProcessesNow = nProcesses;
     presentComm = MPI_COMM_WORLD;
@@ -166,26 +184,26 @@ int main(int argc, char *argv[]) {
     nIter = (int) (log2(nProcessesNow) + 1.1);
     for (int iter = 0; iter < nIter; iter++) {
         seq_length = listLength / nProcessesNow;
-        printf("%d iter %d\n", rank, iter);
         if (iter > 0) {
             MPI_Group_incl(presentGroup, nProcessesNow, gMembersId, &nextGroup);
             MPI_Comm_create(presentComm, nextGroup, &nextComm);
             presentGroup = nextGroup;
             presentComm = nextComm;
             if (rank >= nProcessesNow) {
-                break;
+                free(recListSeq);
+                MPI_Finalize();
+                exit(EXIT_SUCCESS);
             }
         }
         MPI_Comm_size(presentComm, &nProcesses);
-        if (rank == 1) {
-            printf("seq_len = %d\n", seq_length);
-        }
         /* send: Scatter */
         MPI_Scatter(sendListSeq, seq_length, MPI_INT,
                     recListSeq, seq_length, MPI_INT, 0, presentComm);
         /* sorting process */
         if (iter > 0) {
-            bitonic_sort(recListSeq, seq_length);
+            bool dir = (rank % 2 == 0);
+            bitonic_merge(recListSeq, listLength, dir);
+            //bitonic_sort(recListSeq, seq_length);
         } else {
             bitonic_sort(recListSeq, seq_length);
         }
@@ -194,25 +212,16 @@ int main(int argc, char *argv[]) {
                    sendListSeq, seq_length, MPI_INT, 0, presentComm);
         nProcessesNow = nProcessesNow >> 1;
     }
-    printf("%d - sorted\n", rank);
-
-    if (rank == 0) {
-        printf("é aqui\n");
-        for (int i = 0; i < listLength; i++) {
-            mainList[i] = recListSeq[i];
-        }
-        free(sendListSeq);
-    }
 
     free(recListSeq);
 
     if (rank == 0) {
-        printf("\nElapsed time multi process = %.6f s\n\n", get_delta_time());
+        printf("\nElapsed time multi process = %.6f s\n", get_delta_time());
         printf("file: %s\n", filepath);
         bool sorted = true;
         for (int i = 0; i < listLength - 1; i++) {
-            int num01 = mainList[i];
-            int num02 = mainList[i + 1];
+            int num01 = sendListSeq[i];
+            int num02 = sendListSeq[i + 1];
             if (num01 > num02) {
                 fprintf(stderr, "Error in position %d between element %d and %d\n", i, num01, num02);
                 sorted = false;
@@ -225,10 +234,9 @@ int main(int argc, char *argv[]) {
             printf("Fail to sort list\n");
         }
         printf("\n");
-        free(mainList);
+        free(sendListSeq);
     }
 
-    printf("%d - finished\n", rank);
     MPI_Finalize();
     exit(EXIT_SUCCESS);
 }

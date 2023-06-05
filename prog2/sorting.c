@@ -26,68 +26,6 @@ void print_list(int *list, unsigned int length) {
 }
 
 /**
- * \brief Gets the size of a binary file containing a list of integers.
- *
- * \param path Path to the binary file to read.
- * 
- * \return The size of the list of integers stored in the file.
- */
-int get_list_size(char *path)
-{
-    int size;
-    FILE *fp = fopen(path, "rb");
-    if (fread(&size, sizeof(int), 1, fp) != 1) {
-        if (feof(fp)) {
-            fprintf(stderr, "Unexpected end of file while reading file\n");
-            exit(EXIT_FAILURE);
-        } else if (ferror(fp)) {
-            fprintf(stderr, "Error while reading file\n");
-            exit(EXIT_FAILURE);
-        }
-    }
-    fclose(fp);
-    return size;
-}
-
-/**
-* \brief Reads a list of integers from a binary file and returns it as an integer array.
-*
-* \param filepath The path of the binary file to read.
-* \return An integer array containing the sequence of integers in the binary file.
-*/
-int *create_list(char *filepath) {
-    int length;
-    int *sequence;
-    FILE* fp = fopen(filepath, "rb");
-    if (fread(&length, sizeof(int), 1, fp) != 1) {
-        if (feof(fp)) {
-            fprintf(stderr, "Unexpected end of file while reading file\n");
-            exit(EXIT_FAILURE);
-        } else if (ferror(fp)) {
-            fprintf(stderr, "Error while reading file\n");
-            exit(EXIT_FAILURE);
-        }
-    }
-    // Allocate memory for the sequence of integers in the list
-    sequence = (int*)malloc(length * sizeof(int));
-    // Read the sequence of integers from the binary file
-    for (int i = 0; i < length; i++) {
-        int* pos = (sequence + i);
-        if (fread(pos, sizeof(int), 1, fp) != 1) {
-            if (feof(fp)) {
-                fprintf(stderr, "Unexpected end of file while reading file\n");
-                exit(EXIT_FAILURE);
-            } else if (ferror(fp)) {
-                fprintf(stderr, "Error while reading file\n");
-                exit(EXIT_FAILURE);
-            }
-        }
-    }
-    fclose(fp);
-    return sequence;
-}
-
-/**
  *  \brief Get the process time that has elapsed since last call of this time.
  *
  *  \return process elapsed time
