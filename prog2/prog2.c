@@ -202,6 +202,7 @@ int main(int argc, char *argv[]) {
         /* sorting process */
         if (iter > 0) {
             bool dir = (rank % 2 == 0);
+            printf("%d - len=%d dir=%d\n", rank, seq_length, dir);
             bitonic_merge(recListSeq, listLength, dir);
             //bitonic_sort(recListSeq, seq_length);
         } else {
