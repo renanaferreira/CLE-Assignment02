@@ -12,7 +12,7 @@
 #include <time.h>
 
 extern void bitonic_merge(int *list, unsigned int length, bool asc);
-extern void bitonic_sort(int *list, unsigned int length);
+extern void bitonic_sort(int *list, unsigned int length, bool asc);
 
 extern void print_list(int *list, unsigned int length);
 

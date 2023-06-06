@@ -62,19 +62,19 @@ bool is_file_open(char *path)
 }
 
 void bitonic_merge(int *list, unsigned int length, bool asc) {
-    unsigned int half_len, nL, m, n, offset, t;
+    unsigned int half_len, n_pair_subseqs, m, cur_pair_subseq, inner_offset, t;
     unsigned int idx01, idx02;
 
     half_len = length >> 1; // length / 2
-    nL = 1;
+    n_pair_subseqs = 1;
     for (m = 0; m < (int)log2f((float)length); m++) { // for each subsequence size, such as sub_size=2^m
-        n = 0;
-        offset = 0;
-        while (n < nL) {
+        cur_pair_subseq = 0;
+        inner_offset = 0;
+        while (cur_pair_subseq < n_pair_subseqs) {
             for (t = 0; t < half_len; t++) {
 
-                idx01 = t + offset;
-                idx02 = t + offset + half_len;
+                idx01 = inner_offset + t;
+                idx02 = idx01 + half_len;
 
                 // CAPS
                 if ((asc && list[idx01] > list[idx02]) || (!(asc) && list[idx01] < list[idx02])) {
@@ -83,21 +83,22 @@ void bitonic_merge(int *list, unsigned int length, bool asc) {
                     list[idx02] = tmp;
                 }
             }
-            offset += (half_len << 1); // offset = offset + (half_len * 2)
-            n += 1;
+            inner_offset += (half_len << 1); // offset = offset + (half_len * 2)
+            cur_pair_subseq += 1;
         }
         half_len >>= 1; // half_len = half_len / 2
-        nL <<= 1; // nL = nL * 2
+        n_pair_subseqs <<= 1; // nL = nL * 2
     }
 }
 
-void bitonic_sort(int *list, unsigned int length) {
+void bitonic_sort(int *list, unsigned int length, bool asc) {
     int sub_size, sub_offset;
-    bool asc;
-    for (sub_size = 2; sub_size <= length; sub_size <<= 1) { // for each subsequence size in the list
+    bool inner_asc;
+    for (sub_size = 2; sub_size < length; sub_size <<= 1) { // for each subsequence size in the list
         for (sub_offset = 0; sub_offset < length; sub_offset += sub_size) { // for each subsequence offset
-            asc = (sub_offset / sub_size) % 2 == 0; // divide j by list length to discover its direction
-            bitonic_merge(list + sub_offset, sub_size, asc);
+            inner_asc = (sub_offset / sub_size) % 2 == 0; // divide j by list length to discover its direction
+            bitonic_merge(list + sub_offset, sub_size, inner_asc);
         }
     }
+    bitonic_merge(list, length, asc);
 }

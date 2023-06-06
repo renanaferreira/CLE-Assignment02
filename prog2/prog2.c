@@ -200,13 +200,11 @@ int main(int argc, char *argv[]) {
         MPI_Scatter(sendListSeq, seq_length, MPI_INT,
                     recListSeq, seq_length, MPI_INT, 0, presentComm);
         /* sorting process */
+        bool dir = (rank % 2 == 0);
         if (iter > 0) {
-            bool dir = (rank % 2 == 0);
-            printf("%d - len=%d dir=%d\n", rank, seq_length, dir);
-            bitonic_merge(recListSeq, listLength, dir);
-            //bitonic_sort(recListSeq, seq_length);
+            bitonic_merge(recListSeq, seq_length, dir);
         } else {
-            bitonic_sort(recListSeq, seq_length);
+            bitonic_sort(recListSeq, seq_length, dir);
         }
         /*receive: Gather */
         MPI_Gather(recListSeq, seq_length, MPI_INT,
@@ -237,6 +235,7 @@ int main(int argc, char *argv[]) {
         printf("\n");
         free(sendListSeq);
     }
+
 
     MPI_Finalize();
     exit(EXIT_SUCCESS);
