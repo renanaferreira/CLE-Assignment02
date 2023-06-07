@@ -1,10 +1,18 @@
-#include "prog1.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdbool.h>
+#include <string.h>
+#include <getopt.h>
+#include <mpi.h>
+#include <libgen.h>
+
+#include "textProcessing.h"
 
 /** \brief maximum number of worker processes */
-#define MAX_WORKERS    8
+#define MAX_WORKERS 9
 
 /** \brief maximum number of files */
-#define MAX_FILES  6
+#define MAX_FILES   6
 
 /** \brief maximum file size */
 #define MAX_FILE_SIZE  100000

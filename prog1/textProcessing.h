@@ -7,8 +7,8 @@
 #include <time.h>
 #include <math.h>
 
-#include "consts.h"
-#include "utils.h"
+/** \brief maximum number of bytes per chunk */
+#define MAX_CHUNK_BYTES 8000
 
 #define MAX_UTF8_CHAR_SIZE 4
 
@@ -47,5 +47,10 @@ extern Chunk get_chunk(FILE *fp, int maxChunkBytes);
 extern TextResult process_chunk(Chunk chunk);
 extern TextResult reduce(TextResult result01, TextResult result02);
 extern void print_results(char *path, TextResult results);
+
+long get_file_size(char *path);
+bool is_file_open(char *path);
+double get_delta_time(void);
+int *get_workers(int size, int rank_dispatcher);
 
 #endif /* TEXT_PROCESSING_H */

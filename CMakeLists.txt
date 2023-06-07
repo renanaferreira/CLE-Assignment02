@@ -9,13 +9,9 @@ include_directories(prog2)
 include_directories(/home/renan/mpich-install/include)
 
 add_executable(CLE_Assignment02
-        prog1/consts.h
         prog1/prog1.c
-        prog1/prog1.h
         prog1/textProcessing.c
         prog1/textProcessing.h
-        prog1/utils.c
-        prog1/utils.h
         prog2/prog2.c
         prog2/sorting.c
         prog2/sorting.h
