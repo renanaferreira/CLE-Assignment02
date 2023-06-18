@@ -18,12 +18,8 @@ typedef struct TextPartialResult {
     bool vowelPresence[TOTAL_VOWELS];
 } TextPartialResult;
 
-static bool isEqual(UTF8Character char01, UTF8Character char02);
 static bool isWordCharacter(UTF8Character character);
-static bool isAlphanumeric(UTF8Character character);
-static bool isConsonant(UTF8Character character);
 static bool isVowel(UTF8Character character);
-static bool isNumber(UTF8Character character);
 static bool isVowelA(UTF8Character character);
 static bool isVowelE(UTF8Character character);
 static bool isVowelI(UTF8Character character);
@@ -35,32 +31,12 @@ static bool isPunctuation(UTF8Character character);
 static bool isSeparation(UTF8Character character);
 static bool isWhitespace(UTF8Character character);
 static bool isUnderscore(UTF8Character character);
-static bool isCedilla(UTF8Character character);
-static void printChar(UTF8Character character);
 static int getCharSize(unsigned char first_byte);
 
 static TextPartialResult get_initial_partial_result();
 static int get_vowel_idx(UTF8Character character);
 static UTF8Character get_char(Chunk *chunk);
 static void process_char(UTF8Character character, TextPartialResult *results);
-static void set_to_false(int length, bool array[]);
-
-static const UTF8Character NULL_CHAR = {.length = -1};
-
-bool isEqual(UTF8Character char01, UTF8Character char02) {
-    if (char01.length == char02.length && char01.length == -1) {
-        return true;
-    }
-    if (char01.length != char02.length) {
-        return false;
-    }
-    for (int i = 0; i < char01.length; i++) {
-        if (char01.character[i] != char02.character[i]) {
-            return false;
-        }
-    }
-    return true;
-}
 
 /**
 * \brief Checks if the given UTF8 character is a word character.
@@ -87,52 +63,6 @@ bool isWordCharacter(UTF8Character character) {
 }
 
 /**
-* \brief Checks if the given UTF8 character is alphanumeric.
-*
-* \param character The UTF8 character to be checked.
-*
-* \return true if the given character is alphanumeric, false otherwise.
-*/
-bool isAlphanumeric(UTF8Character character) {
-    if (isConsonant(character)) {
-        return true;
-    }
-    if (isVowel(character)) {
-        return true;
-    }
-    if (isNumber(character)) {
-        return true;
-    }
-    return false;
-}
-
-/**
-* \brief Checks if the given UTF8 character is a consonant.
-*
-* \param character The UTF8 character to be checked.
-*
-* \return true if the given character is a consonant, false otherwise.
-*/
-bool isConsonant(UTF8Character character) {
-    if (isVowel(character)) {
-        return false;
-    }
-    if (isCedilla(character)) {
-        return true;
-    }
-
-    if (character.length == 1) {
-        if (0x41 <= character.character[0] && character.character[0] <= 0x5A) { // upper
-            return true;
-        }
-        if (0x61 <= character.character[0] && character.character[0] <= 0x7A) { // lower
-            return true;
-        }
-    }
-    return false;
-}
-
-/**
 * \brief Checks if the given UTF8 character is a vowel.
 *
 * \param character The UTF8 character to be checked.
@@ -151,23 +81,6 @@ bool isVowel(UTF8Character character) {
     if (isVowelU(character))
         return true;
     if (isVowelY(character))
-        return true;
-
-    return false;
-}
-
-/**
-* \brief Checks if the given UTF8 character is a number.
-*
-* \param character The UTF8 character to be checked.
-*
-* \return true if the given character is a number, false otherwise.
-*/
-bool isNumber(UTF8Character character) {
-    if (character.length != 1)
-        return false;
-
-    if (0x30 <= character.character[0] && character.character[0] <= 0x39)
         return true;
 
     return false;
@@ -543,30 +456,6 @@ bool isUnderscore(UTF8Character character) {
 }
 
 /**
- * \brief Checks if a given UTF8 character is a C-cedilla.
- *
- * \param character The UTF8 character to check.
- *
- * \return True if the character is a C-cedilla, false otherwise.
- */
-bool isCedilla(UTF8Character character) {
-    if (character.length == 2) {
-        if (character.character[0] == 0xC3) {
-            // C cedilla Upper
-            if (character.character[1] == 0x87) {
-                return true;
-            }
-            // C cedilla Lower
-            if (character.character[1] == 0xA7) {
-                return true;
-            }
-        }
-    }
-
-    return false;
-}
-
-/**
  * \brief Determines the size of a UTF8 character given its first byte.
  *
  * \param first_byte The first byte of the UTF8 character to determine the size of.
@@ -592,18 +481,6 @@ int getCharSize(unsigned char first_byte) {
         return 1;
     }
     return -1;
-}
-
-/**
- * \brief Prints the hexadecimal representation of a given UTF8Character object to the console.
- *
- * \param character The UTF8Character object to print.
- */
-void printChar(UTF8Character character) {
-    printf("0x");
-    for (int i = 0; i < character.length; i++) {
-        printf("%x", character.character[i]);
-    }
 }
 
 /**
@@ -659,7 +536,8 @@ int get_vowel_idx(UTF8Character character) {
     if (isVowelY(character))
         return Y_IDX;
 
-    return -1;
+    fprintf(stderr, "Error! character is not a vowel!\n");
+    exit(EXIT_FAILURE);
 }
 
 /**
@@ -714,7 +592,7 @@ TextResult process_chunk(Chunk chunk) {
     chunk.position = 0;
     while (true) {
         character = get_char(&chunk);
-        if (isEqual(character, (UTF8Character) NULL_CHAR)) {
+        if (character.length == -1) {
             break;
         }
         process_char(character, &result);
@@ -731,8 +609,11 @@ TextResult process_chunk(Chunk chunk) {
  *         Returns NULL_CHAR if there are no more characters to get.
  */ 
 UTF8Character get_char(Chunk *chunk) {
+    UTF8Character character;
+
     if (chunk->position == chunk->length) {
-        return NULL_CHAR;
+        character.length = -1;
+        return character;
     }
 
     if (chunk->position > chunk->length) {
@@ -751,8 +632,8 @@ UTF8Character get_char(Chunk *chunk) {
         exit(EXIT_FAILURE);
     }
 
-    UTF8Character character;
-    character.length = length;
+
+    character.length = (short)length;
     for (int i = 0; i < character.length; i++) {
         character.character[i] = chunk->bytes[chunk->position++];
     }
@@ -766,8 +647,11 @@ UTF8Character get_char(Chunk *chunk) {
  * \param results A pointer to a TextPartialResult structure to be updated.
  */ 
 void process_char(UTF8Character character, TextPartialResult *results) {
-    int vowelIdx;
+    if(isMerger(character)) {
+        return;
+    }
 
+    int vowelIdx;
     if (results->inWord) {
         if (isWordCharacter(character)) {
             if (isVowel(character)) {
@@ -784,27 +668,15 @@ void process_char(UTF8Character character, TextPartialResult *results) {
         if (isWordCharacter(character)) {
             results->inWord = true;
             results->results.nWords++;
-            set_to_false(TOTAL_VOWELS, results->vowelPresence);
+            for (int i = 0; i < TOTAL_VOWELS; i++) {
+                results->vowelPresence[i] = false;
+            }
             if (isVowel(character)) {
                 vowelIdx = get_vowel_idx(character);
                 results->results.nWordsVowel[vowelIdx]++;
                 results->vowelPresence[vowelIdx] = true;
             }
         }
-    }
-}
-
-/**
- *  \brief Set each element of a boolean array to false.
- *
- *  \param n The size of the boolean array.
- *  \param array The boolean array to be set to false.
- */
-void set_to_false(int n, bool array[])
-{
-    for (int i = 0; i < n; i++)
-    {
-        array[i] = false;
     }
 }
 
@@ -844,7 +716,7 @@ Chunk get_chunk(FILE *fp, int maxChunkBytes) {
             }
         }
         fseek(fp, -1L, SEEK_CUR);
-        character.length = getCharSize(byte);
+        character.length = (short)getCharSize(byte);
         if (character.length == -1) {
             fprintf(stderr, "unexpected utf8 byte %x. File is compromised and not correct written in utf8\n", byte);
             exit(EXIT_FAILURE);
